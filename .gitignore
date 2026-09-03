@@ -1,5 +1,5 @@
 # Data folders
-data/*
+01_DataSources/data/*
 !data/.gitkeep
 
 # History files

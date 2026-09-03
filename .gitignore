@@ -1,3 +1,7 @@
+# Data folders
+data/*
+!data/.gitkeep
+
 # History files
 .Rhistory
 .Rapp.history

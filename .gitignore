@@ -1,6 +1,5 @@
 # Data folders
-01_DataSources/data/*
-!data/.gitkeep
+01_DataSources/data/
 
 # History files
 .Rhistory

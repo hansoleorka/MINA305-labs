@@ -1,0 +1,165 @@
+---
+title: '**Lab 1: Introduction to remote sensing**'
+author: '*Hans Ole Ørka, 3. September 2025*'
+output:
+  html_notebook: 
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: false
+editor_options:
+  chunk_output_type: inline
+---
+
+<hr style="border:3px solid gray">
+
+# Install software
+
+- Download and install QGIS from <https://qgis.org/download/>. (3.44 LTR version)
+- Download and install R from <https://cran.r-project.org/>
+- Download and install RStudio from <https://posit.co/products/open-source/rstudio>.
+
+# ***Part 1: Explore Image Data in QGIS***
+
+::: {style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #31708f; background-color: #d9edf7; border-color: #bce8f1;"}
+**Goal:** Understand spatial, spectral, and radiometric resolution and refresh QGIS skills.
+:::
+
+**Data:** The required data for this lab is available accessed via this link: <https://bit.ly/3sZzfTm>. The dataset includes five different optical images and a GeoPackage.
+
+## Task 1: Explore remotely sensed image data in QGIS
+
+Download the optical data sources provided and open them in QGIS. Describe the data with respect to:
+
+- Spatial resolution
+- Spectral resolution
+- Radiometric resolution
+- Minimum detectable object in meters
+
+**Question:** What is the relationship between pixel size and detectable object size?
+
+| File name  | Spatial | Spectral | Radiometric | Minimum detectable object (meter) |
+|:-------------|:-------------|:-------------|:-------------|:-------------|
+| cir        |         |          |             |                                   |
+| rgb        |         |          |             |                                   |
+| planet     |         |          |             |                                   |
+| sentinel2A |         |          |             |                                   |
+| sentinel2B |         |          |             |                                   |
+
+## Task 2: Collect references data by digitization
+
+[We maye skip due to time - use the geopackage named *lab1_my.gpkg*]{style="color:red; font-weight:bold;"}
+
+Digitize land cover types (Forest, Cropland, Grassland, Settlements, Water, Wetland, Other land) using the datasets with the highest spatial resolution. You should create polygons e.g.
+
+<img src="img/Screenshot from 2023-09-12 20-45-35.png" alt="Alt text" width="600"/>
+
+Save as [geopackage](https://www.geopackage.org/).
+
+# ***Part 2: Remote sensing analysis and spatial analysis in R***
+
+::: {style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #31708f; background-color: #d9edf7; border-color: #bce8f1;"}
+**Goal:** Carry out your first remote sensing analysis and get familiar with R and RStudio. The analysis involves classifying land cover types using the digitized reference data provided in Part 1, while learning basic R syntax and how to work with spatial data.
+:::
+
+**Data:** You should also incorporate the digitized land cover type polygons from part 1 of this exercise (refered to as ' *lab1_my.gpkg*' below). The attribute representing the land cover types - Forest, Cropland, Grassland, Settlements, Water, Wetland, and Other land - is named *Type* in the example provide below. Your name of this attribute and the names representing the classes may differ.
+
+## Task 1: Spatial data in R
+
+First read in vector data to be used.
+
+```{r}
+library(sf)
+g <- read_sf("data/lab1_my.gpkg") #Read your digitized polygons
+g$ID <- c(1:nrow(g)) #Create a unique ID for each polygon (record/row)
+plot(g["Type"]) #Plot the attribute (Column) containing the land cover types. 
+ar5 <- read_sf("data/lab1.gpkg","ar5") #Read the Norwegian land cover dataset AR5 (Arealressurskart 1:5000) 
+plot(st_geometry(ar5)) #Plot only the geometry (outline) of this
+```
+
+### Making overlay analysis i R - intersection
+
+R can be used to do spatial analysis e.g. overlay anlysis such as union ( *st_union* ), intersection ( *st_intersection*) and more.
+
+```{r}
+g <- st_transform(g,st_crs(ar5)) # project coordinat system of your polygons to the same system as ar5 - land cover dataset. 
+int <- st_intersection(ar5,g) #If error see below
+plot(st_geometry(int))
+```
+
+### Geting raster data (optical imagery) into R
+
+There are several packages that allows for getting raster data into R. The most common is the **raster** package that now is gradully replaced by the **terra** package. In addition there is a package called **stars** dealing with spatiotemporal arrays.
+
+```{r}
+library(terra) #Load the terra package if you not install you need to install it (install.packages())
+# Sentinel 2
+s2 <- rast("data/sentinel2A.tif")
+plot(s2)
+plotRGB(s2, r=3, g=2, b=1, stretch="hist")
+```
+
+We like to extract pixels from our training areas and combine them with the interpreted information i.e. your polygons. To extract pixel values for the digitized polygons we used the *extract* function of the **terra** package and combine the two data sources.
+
+```{r}
+#If you have a older version you need to convert the sf object into a terra vector data
+#g <- vect(g)
+e <- extract(s2,g) # Extract information 
+head(e)
+g2 <- merge(g,e,by="ID") #Merge the two tables into one using ID
+g2$Type <- as.factor(g2$Type) # Convert to factor i.e. categorical variable in R
+head(g2)
+```
+
+## Task 2: Create a classification
+
+We aim to create a classification model using the data extracted from our training polygons. In this example, we employ the randomForest algorithm. Random forests are an easy-to-use machine learning algorithm that usually preforms well.
+
+```{r}
+library(randomForest)
+rf1 <- randomForest(Type~Blue+Green+Red+NIR,data=g2)
+pred <- predict(s2,rf1)
+plot(pred)
+#writeRaster(pred,"data/lab1/classification.tif") # Save to disk (# means that it is commented out and will not be run, remove # to save on disk)
+```
+
+We could also use other classification algorithms, such as linear discriminant analysis (LDA).
+
+```{r}
+dat <- st_drop_geometry(g2[,-1])
+head(dat)
+library(MASS)
+lda1 <- lda(Type~.,data=dat)
+pd <- function(lda1,..){predict(lda1,..)$class}
+pred <- predict(s2,lda1,fun=pd)
+plot(pred)
+#writeRaster(pred,"data/lab1/classification_planet2.tif")
+```
+
+> ***NOTE:*** Any differences? Where are the errors. Can you improve?
+
+## Task 3: Check accuracy
+
+Accuracy is evaluated using a so-called error matrix that summarizes the number of observations according to the actual class and predicted class. The diagonal of the matrix shows the correctly classified observations. A useful reference for the error matrix is: Congalton, R. G. (1991). A review of assessing the accuracy of classifications of remotely sensed data. Remote Sensing of Environment, 37(1), 35–46. [https://doi.org/10.1016/0034-4257(91)90048-B](https://doi.org/10.1016/0034-4257(91)90048-B){.uri}
+
+```{r}
+library(dplyr)
+pkt <- st_sample(ar5,size=1000) # Random sample of points within the ar5 dataset
+pkt <- st_intersection(ar5 %>% dplyr::select(IPCC,geom),pkt) #Intersection with ar5 i.e. extract teh IPCC - value 
+head(pkt)
+e <- extract(pred,vect(pkt)) #Extract predicted value from the pixel at the point location
+pkt <- cbind(pkt,e[,-c(1)]) #Combine 
+names(pkt)[2] <- "Predicted"
+head(pkt)
+pkt$Reference <- substr(pkt$IPCC,1,1)
+pkt$Predicted <- factor(pkt$Predicted,labels=unique(pkt$Reference),levels=unique(pkt$Reference))
+pkt$Reference <- factor(pkt$Reference,labels=unique(pkt$Reference),levels=unique(pkt$Reference))
+#Create errormatrix
+em <- xtabs(~Predicted+Reference,data=pkt,addNA=T)
+em
+sum(diag(em)) / sum(em)
+```
+
+```{r,echo=FALSE,include=FALSE}
+knitr::purl("01_datasources.Rmd")
+```

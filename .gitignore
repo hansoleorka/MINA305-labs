@@ -1,5 +1,5 @@
 # Data folders
-01_DataSources/data/
+*/data/
 
 # History files
 .Rhistory

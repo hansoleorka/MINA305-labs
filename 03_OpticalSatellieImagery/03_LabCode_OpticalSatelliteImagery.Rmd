@@ -19,9 +19,11 @@ editor_options:
 **Goal:** Combine reference data collected in a forested area with Sentinel-2 satellite imagery to map dominant species and above-ground biomass (AGB). In this process, unsupervised and supervised approaches to analyzing categorical and continuous attributes in optical satellite imagery are explored.
 </div>
 
-**Data:** The data for the lab can be found on Y: or be downloaded from the link below. The data include a GeoPackage with field reference data of dominant species (Spruce, Pine, Broadleaves) and AGB (Mg/ha) and an area of interest polygon (AOI).
+**Data:** The data for the lab can be be downloaded from the link below. The data include a GeoPackage with field reference data of dominant species (Spruce, Pine, Broadleaves) and AGB (Mg/ha) and an area of interest polygon (AOI).
 
 - https://eduumb.sharepoint.com/:f:/s/team_mina305instructors/IgDQvt_W2pV1R5HfIFdT2CGeAdrRPM7_O-uKhNYUjWTDVUs?e=mWPNFP 
+
+**Note:** Download the folders separately. Before decompressing (Extract all) the folder "S2B_MSIL2A_20220624T104629_R051_T32VNM_20220624T122953.SAFE", rename it "S2" to avoid error caused by long path name on Windows.
 
 **Overview**: The figure below illustrates the steps in the lab exercise and how they relate to classification and regression methods, as well as to supervised and unsupervised approaches.
 
@@ -29,7 +31,7 @@ editor_options:
 
 
 ## 1. Download Sentinel-2 data 
-- Download Sentinel-2 data from https://browser.dataspace.copernicus.eu/ or use the data provided in the local directory. The field inventory was carried out in summer 2022.
+- Download Sentinel-2 data from https://browser.dataspace.copernicus.eu/ or use the data provided in the sharepoint. The field inventory was carried out in summer 2022.
 
 In the lab report, include the \*.SAFE name on the folder. In this case: *S2B_MSIL2A_20220624T104629_N0400_R051_T32VNM_20220624T122953.SAFE*   
 
@@ -48,10 +50,10 @@ Instructions for setting up a project in RStudio:
 
 The field reference data is stored with the GPS location coordinates (point) and can be read using the *sf* package. When using it in conjunction with the *terra* package for raster or image data, ensure that you convert it using the *vect* function.
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # Read field reference data and AOI
 library(sf)
-gpkg <- "data/lab2.gpkg" # Path of geopackage 
+gpkg <- "data/lab3.gpkg" # Path of geopackage 
 st_layers(gpkg) # List layers in geopackage
 prfl <- st_read(gpkg,"SamplePlots") # Read sample plots
 head(prfl) # Print the top of the data
@@ -60,21 +62,22 @@ aoi <- st_read(gpkg,"AOI") # Read area of interest polygon
 plot(st_geometry(aoi))
 plot(st_geometry(prfl),add=T) #plot the geometry stored in the attribute geom 
 ```
+
 ## 4. Create multiband raster 
 
-Create multiband images at 10 and 20 m resolution covering the aoi and write to disk. Functions for listing files (*dir*), *rast* and *crop* functions needed. If there are problems with downloading data (approximately 1 GB), the results from this step can be downloaded from:  https://drive.google.com/file/d/1gxk2MOXwIL1VECLGKRVN5Ho306NdyAWE/view?usp=sharing 
+The Sentinel-2 bands are stored separately. Create multiband images at 10 and 20 m resolution covering the aoi and write to disk. Functions for listing files (*dir*), *rast* and *crop* functions needed. If there are problems with downloading data (approximately 1 GB), the results from this step can be downloaded from: https://eduumb.sharepoint.com/:f:/s/team_mina305instructors/IgDQvt_W2pV1R5HfIFdT2CGeAdrRPM7_O-uKhNYUjWTDVUs?e=mWPNFP  
 
 ```{r}
 library(terra)
 # List files in a specific path
 path <- "data/S2B_MSIL2A_20220624T104629_N0400_R051_T32VNM_20220624T122953.SAFE/GRANULE/L2A_T32VNM_A027676_20220624T104625/IMG_DATA/R10m/"
-f1 <- dir(path,pattern="_B",full.names=T)
+f1 <- dir(path,pattern="_B",full.names=T) # list all files containing _B
 f1
 # Read all files
 s <- rast(f1)               
 s2_10m <- crop(s,aoi) # Clip raster to aoi
 names(s2_10m) <- c("Blue","Green","Red","NIR") # Rename bands
-names(s2_10m) <- paste0(names(s2_10m),"_10m") # Add resolution to band, to make it unique
+names(s2_10m) <- paste0(names(s2_10m),"_10m") # Concatenate resolution's name to band, to make it unique
 plotRGB(s2_10m,r=3,g=2,b=1,stretch="hist")
 #writeRaster(s2_10m,"data/sentinel2_10m.tif") # Optionally write file to have access to it in GIS software
 
@@ -94,30 +97,30 @@ plotRGB(s2_20m,r=8,g=5,b=4,stretch="hist")
 The task involves creating an NDVI raster and then exploring NDVI differences based on species, above-ground biomass (AGB), and age by assigning NDVI values to sample plots and visualizing the relationships.
 
 1. Calculate the NDVI from your multispectral imagery (e.g., Sentinel-2) using the formula: NDVI = (NIR - Red) / (NIR + Red), where NIR is near-infrared and Red is the red band.
-2. Use the *extract* function to assign ndvi values to sample plots. 
+2. Use the *extract* function to assign NDVI values to sample plots. 
 3. Explore the relationships through scatter plots of species, age, and AGB on the x-axis and NDVI on the y-axis (or employ other methods to investigate these relationships). The *ggplot2* package provides extensive and excellent plotting capabilities.
 
 
 ```{r}
 library(ggplot2) 
-# Compute NDVI and plot by Species, AGB, Age any strange observations? This can potentially be used for checking errors (e.g. harvest!)
+# Compute NDVI and plot by Species, AGB, Age. Any strange observations? This can potentially be used for checking errors (e.g. harvest!)
 ndvi <- (s2_10m$NIR_10m - s2_10m$Red_10m)/(s2_10m$NIR_10m + s2_10m$Red_10m) # Compute NDVI 
 plot(ndvi)
-e2 <- extract(ndvi,prfl) # Extraxt NDVI at sample plot locations 
+e2 <- extract(ndvi,prfl) # Extract NDVI at sample plot locations 
 prfl$ndvi <- e2[,2] # Assign extracted NDVI values to prfl (Point geometries gives a one-to-one relationship)
-ggplot(prfl,aes(x=Species,y=ndvi)) + geom_boxplot() # Box plot of ndvi by species
+ggplot(prfl,aes(x=Species,y=ndvi)) + geom_boxplot() # Box plot of NDVI by species
 ggplot(prfl,aes(x=Age,y=ndvi,color=Species)) + geom_point() + geom_smooth(method="lm",se=FALSE) # Scatterplot with linear regression lines 
 ggplot(prfl,aes(x=AGB,y=ndvi,color=Species)) + geom_point() + geom_smooth(method="lm",se=FALSE)
 ```
 
 ## 6.Classification - dominant species map
 
-We need to unify resolutions to make predictions for individual pixels. This is solved by resampling the 20 m images to 10 m and then merge them into one raster. 
+We need to standardize resolutions to make predictions for individual pixels. This is solved by resampling the 20 m images to 10 m and then stack them into one raster. 
 
 ```{r}
 # Resample and merge 10 m and 20 m Sentinel 
 s2_20m_resampled <- resample(s2_20m,s2_10m) # Resample
-s2 <- c(s2_10m,s2_20m_resampled) # Merge
+s2 <- c(s2_10m,s2_20m_resampled) # Stack
 s2
 ```
 
@@ -135,7 +138,7 @@ dat <- dat[is.na(dat$NIR)==FALSE,]
 dim(dat)
 
 # Convert species to factor (categorical R variable for classification 
-dat$Species <- factor(dat$Species,levels=c("Spruce","Pine","Broadleaves")) # or if you do not care about the order of species, just: as.facotr(data$Species)
+dat$Species <- factor(dat$Species,levels=c("Spruce","Pine","Broadleaves")) # or if you do not care about the order of species, just: as.factor(data$Species)
 ```
 
 Classifying dominant species using *randomForest* 
@@ -154,11 +157,11 @@ plot(sp,col=c("darkgreen","lightblue","green")) # Make a plot
 
 ## 7. Regression - above ground biomass map (AGB) 
 
-We will use the measurements of biomass (AGB) on the sample plots to make a model used for mapping and evaluate using the Root Mean Square Error. RMSE is calculated as the square root of the mean of the squared differences between observed values ($y_i$) and predicted values ($\hat{y_i}$) for a dataset of size *n*:
+We will use the measurements of biomass (AGB) on the sample plots to make a model to predict biomass. We will evaluate the prediction accuracy using the Root Mean Square Error. RMSE is calculated as the square root of the mean of the squared differences between observed values ($y_i$) and predicted values ($\hat{y_i}$) for a dataset of size *n*:
 $$
 RMSE = \sqrt{\frac{1}{n} \sum_{i=1}^{n}(y_i - \hat{y}_i)^2}
 $$
-The we will make a scatter plot of the observed (y-axis) vs predicted values (fitted) (x-axis). For reasoning behind this see Piñeiro et al. (2008) [^1]. 
+Then we will make a scatter plot of the observed (y-axis) vs predicted values (fitted) (x-axis). For reasoning behind this see Piñeiro et al. (2008) [^1]. 
 
 [^1]: Piñeiro, G., Perelman, S., Guerschman, J. P., & Paruelo, J. M. (2008). How to evaluate models: Observed vs. predicted or predicted vs. observed? Ecological Modelling, 216(3), 316–322. https://doi.org/10.1016/j.ecolmodel.2008.05.006
 

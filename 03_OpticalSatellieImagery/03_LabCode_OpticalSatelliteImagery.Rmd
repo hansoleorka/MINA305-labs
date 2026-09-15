@@ -1,9 +1,12 @@
 ---
-title: '**Lab 2: Optical satellite imagery**'
-author: '*Hans Ole Ørka, 24. September 2024*'
+title: '**Lab 3: Optical satellite imagery**'
+author: '*Hans Ole Ørka, 4. September 2026*'
 output:
-  html_notebook: default
-  number_sections: true
+  html_notebook: 
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: false
 editor_options:
   chunk_output_type: inline
 ---
@@ -18,17 +21,15 @@ editor_options:
 
 **Data:** The data for the lab can be found on Y: or be downloaded from the link below. The data include a GeoPackage with field reference data of dominant species (Spruce, Pine, Broadleaves) and AGB (Mg/ha) and an area of interest polygon (AOI).
 
-- https://drive.google.com/file/d/1K6qR8FkOzAwXew5jSavzpiJVZj5BTuLz/view?usp=sharing 
+- https://eduumb.sharepoint.com/:f:/s/team_mina305instructors/IgDQvt_W2pV1R5HfIFdT2CGeAdrRPM7_O-uKhNYUjWTDVUs?e=mWPNFP 
 
 **Overview**: The figure below illustrates the steps in the lab exercise and how they relate to classification and regression methods, as well as to supervised and unsupervised approaches.
 
-![](02_OpticalSatelliteImagery.drawio.png "")
+![](03_OpticalSatelliteImagery.drawio.png "")
 
 
 ## 1. Download Sentinel-2 data 
 - Download Sentinel-2 data from https://browser.dataspace.copernicus.eu/ or use the data provided in the local directory. The field inventory was carried out in summer 2022.
-
-- "Y:/Student/Course/MINA305-h24/Course-material/02_OpticalSatelliteImagery/Sentinel2/"
 
 In the lab report, include the \*.SAFE name on the folder. In this case: *S2B_MSIL2A_20220624T104629_N0400_R051_T32VNM_20220624T122953.SAFE*   
 
@@ -247,7 +248,7 @@ plot(sp_masked,col=c("darkgreen","lightblue","green"),main="Supervised")
 
 
 ```{r,echo=FALSE,include=FALSE}
-knitr::purl("02_LabCode_OpticalSatelliteImagery.Rmd")
+knitr::purl("03_LabCode_OpticalSatelliteImagery.Rmd")
 ```
 
 # References 

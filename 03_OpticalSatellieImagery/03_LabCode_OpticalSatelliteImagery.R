@@ -59,7 +59,7 @@ s2
 # Extract RS information 
 e <- extract(s2,vect(prfl))
 dat <- cbind(prfl,e[-1]) # -1 for removing ID
-dat <- dat %>% st_drop_geometry() # removing geometry
+dat <- st_drop_geometry(dat) # removing geometry
 
 # Remove nodata points
 dim(dat)
@@ -148,5 +148,5 @@ plot(sp_masked,col=c("darkgreen","lightblue","green"),main="Supervised")
 
 
 ## ----echo=FALSE,include=FALSE----------------------------------------------------------------------------------------------------------------------------------------
-knitr::purl("02_LabCode_OpticalSatelliteImagery.Rmd")
+knitr::purl("03_LabCode_OpticalSatelliteImagery.Rmd")
 

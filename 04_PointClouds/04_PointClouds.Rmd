@@ -1,0 +1,214 @@
+---
+title: "Lab 4: Point clouds from photogrammetry and lidar"
+output:
+  html_notebook: default
+  number_sections: true
+author: Hans Ole Ørka, 19. September 2026
+editor_options: 
+  chunk_output_type: inline
+---
+<hr style="border:3px solid gray">
+
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #31708f; background-color: #d9edf7; border-color: #bce8f1;">
+**Goal:** Understand difference between point cloud data obtain from lidar or Airborne laser scanning (ALS) and aerial imagery/photogrammetry or Digital Aerial Photogrammetry (DAP). Learn the basic content of the LAS/LAZ format specification and how this data can be manipulated to create Digital Surface Models (DSMs), Digital Terrain Models (DTMs), and Canopy Height Models (CHMs).
+</div>
+
+
+**Data:** The data for the lab can be downloaded from the link below.
+
+- https://eduumb.sharepoint.com/:f:/s/team_mina305instructors/IgD5sXOG76LaTr5QUe5z6ZIhAYwWuhzsMaKkdRar_iUmWd4?e=ya2V67 
+
+# _**Part 1: Exploring point clouds using lidR**_
+
+The lab exercise is carried out using [R](https://www.r-project.org/) and the [lidR-package](https://github.com/r-lidar/lidR). The [lidRBook](https://r-lidar.github.io/lidRbook/) is a fantastic resource! 
+
+## Necessary R packages
+
+```{r,eval=T}
+# Load packages 
+library("lidR")
+library("sf")
+library("terra")
+library("ggplot2")
+library("future")
+```
+
+## Read and inspect laser data
+
+Three different point clouds are provided in the folder "data/frydenhaug/":
+
+| Filename    | Type  | p/m^2 |   |   |
+|:-------------|-------:|-------:|---|---|
+| als2008.laz | lidar | 1.9   |   |   |
+| als2021.laz | lidar | 5     |   |   |
+| dap2021.laz | image | 20    |   |   |
+
+### ALS 2008
+
+```{r setup, warning=FALSE}
+#Read ALS file 
+lasFile <- "data/frydenhaug/als2008.laz" # Filename
+las <- readLAS(lasFile)
+plot(las)
+
+filter <- "-keep_xy 599850 6615750 600250 6616030" #Filter to only select a spesific area  
+las <- readLAS(lasFile,filter=filter)
+plot(las)
+head(las)
+names(las)
+hist(las$Z)
+plot(las,color="Classification")
+table(las$Classification)
+plot(las,color="PointSourceID")
+table(las$PointSourceID)
+```
+### ALS 2021
+
+```{r}
+lasFile <- "data/frydenhaug/als2021.laz" # Filename
+filter <- "-keep_xy 599850 6615750 600250 6616030" #Filter to only select a spesific area  
+las <- readLAS(lasFile,filter=filter)
+plot(las)
+head(las)
+
+hist(las$Z)
+plot(las,color="Intensity",pal=gray.colors(20))
+plot(las,color="Classification")
+table(las$Classification)
+plot(las,color="PointSourceID")
+plot(las,color="ScanAngleRank")
+table(las$PointSourceID)
+```
+### DAP 2021
+
+```{r}
+lasFile <- "data/frydenhaug/dap2021.laz" # Filename
+filter <- "-keep_xy 599850 6615750 600250 6616030" #Filter to only select a spesific area  
+las <- readLAS(lasFile,filter=filter)
+las
+plot(las)
+plot(las,color="RGB")
+lasNIR <- las
+lasNIR$B <- las$G
+lasNIR$G <- las$R
+lasNIR$R <- las$Intensity
+plot(lasNIR,color="RGB")
+table(lasNIR$Classification)
+```
+
+# _**Part 2: Create DSM, DTM and CHM**_
+
+
+```{r}
+lasFile <- "data/frydenhaug/als2021.laz" # Filename
+filter <- "-keep_xy 599850 6615750 600250 6616030" #Filter to only select a spesific area  
+las <- readLAS(lasFile,filter=filter)
+```
+
+## Ground classification and creation of digital terrin model
+```{r}
+# Select ground echoes
+ground <- readLAS(lasFile,filter=paste0(filter, " -keep_class 2"))
+plot(ground)
+x <- plot(ground,color="Intensity",colorPalette=gray.colors(20))
+veg <- readLAS(lasFile,filter=paste0(filter, " -drop_class 2"))
+plot(veg,add=x)
+
+# DTM
+dtm <- rasterize_terrain(las, res = 1, algorithm = tin())
+x <- plot(veg)
+add_dtm3d(x, dtm)
+plot(dtm)
+
+# DSM
+dsm <- rasterize_canopy(las,res = 1, algorithm = dsmtin())
+plot(dsm)
+
+chm <- dsm - dtm
+plot(chm)
+```
+
+## Normalizing ALS point cloud data
+
+```{r}
+lasdz <- normalize_height(las, tin())
+plot(lasdz)
+table(lasdz$Classification)
+plot(lasdz,color="Classification")
+```
+
+## Difference between 2021 and 2008 
+
+
+```{r}
+chm2021 <- chm
+lasFile <- "data/frydenhaug/als2008.laz" # Filename
+filter <- "-keep_xy 599850 6615750 600250 6616030" #Filter to only select a spesific area  
+las <- readLAS(lasFile,filter=filter)
+dtm <- rasterize_terrain(las, res = 1, algorithm = tin())
+dsm <- rasterize_canopy(las,res = 1, algorithm = dsmtin())
+chm2008 <- dsm - dtm
+diff <- chm2021 - chm2008
+plot(diff)
+```
+
+
+```{r}
+chm2021 <- chm
+lasFile <- "data/frydenhaug/dap2021.laz" # Filename
+filter <- "-keep_xy 599850 6615750 600250 6616030" #Filter to only select a spesific area  
+dap <- readLAS(lasFile,filter=filter)
+dsmdap <- rasterize_canopy(dap,res = 1, algorithm = dsmtin())
+chmdap <- dsmdap - dtm
+diff <- chm2021 - chmdap
+plot(diff)
+
+```
+
+# **Extra:Repeat on a larger area**
+
+
+```{r}
+library(lidR)
+lasFile <- "data/vaaler/0008.las"
+filter <- "-keep_xy 606200 6600150 606500 6600450" 
+las <- readLAS(lasFile,filter=filter)
+plot(las)
+head(las)
+plot(las,color="Classification")
+plot(las,color="PointSourceID")
+table(las$Classification)
+table(las$ReturnNumber)
+plot(las,color="Intensity",pal=gray.colors(20))
+```
+
+## Normalizing ALS data
+
+```{r}
+lasdz <- normalize_height(las, tin())
+plot(lasdz)
+table(lasdz$Classification)
+plot(lasdz,color="Classification")
+lasdz_no_noise <- classify_noise(lasdz,algorithm=ivf(5,2))
+table(lasdz_no_noise$Classification)
+lasdz_filtered <- filter_poi(lasdz_no_noise,Classification != 7 & Classification != 18)
+plot(lasdz_filtered,color="Classification")
+plot(lasdz_filtered)
+```
+
+
+## Normalize ALS data from multiple files
+
+This take some time ........
+
+```{r,eval=FALSE}
+ctg <- readLAScatalog("data/vaaler/")
+opt_filter(ctg) <- "-keep_classification 0 1 2"
+opt_output_files(ctg) <-  paste0("data/vaalerdz/", "/{ORIGINALFILENAME}_norm")
+ctgdz <- normalize_height(ctg, tin())
+```
+
+```{r,echo=FALSE,include=FALSE}
+knitr::purl("04_PointClouds.Rmd")
+```

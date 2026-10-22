@@ -15,7 +15,9 @@ editor_options:
 
 <div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #7d7d7d; background-color: #c0c0c0; border-color: #b7b7b7;">
 **Data download** 
+
 - https://eduumb.sharepoint.com/:u:/s/team_mina305instructors/IQDldzpMpTMBQLD1O1XZINpSAUWfbAyyswpPGupE9suhV1E?e=BGPMp0
+
 - train folder: .las files for 30 plots
 - test folder: .las files for 35 plots (will be used to test the segmentation algorithm developed for the assignment 3)
 - vaaler_train.gpkg: field reference data
@@ -126,7 +128,7 @@ plot(st_geometry(plots),add=T,lws=2)
 
 # Creating a loop to run on all the data 
 
-```{r,eval=FALSE}
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
 out_ttops <-out_itc <- c()
 ctg <- catalog("data/train/")
 for(i in c(1:nrow(ctg))){

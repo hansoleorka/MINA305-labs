@@ -20,18 +20,11 @@ Set up each lab as its own RStudio project. The lab code reads files with relati
 
 1.  **Create the project.** In RStudio, choose *File → New Project… → New Directory → New Project*. Give the folder the name of the lab and click *Create Project*. RStudio makes the folder and a `.Rproj` file in it, and opens the project.
 
-2.  **Create the subfolders.** In the project folder, make a `data` folder and an `R` folder, either in the *Files* pane (*New Folder*) or from the R console:
+2.  **Download and unzip the data.** Download the zip file given in the data instructions at the top of the lab. Unzip it directly into the project folder. The zip file already contains the `data` folder (and an `R` folder with helper functions, if the lab has any), so you do not need to create these folders yourself. Check that `data/` sits directly in the project folder and not inside an extra folder (e.g. `<lab_name>/<zip_name>/data/`); if it does, move it up one level.
 
-    ``` r
-    dir.create("data")
-    dir.create("R")
-    ```
+3.  **Get the lab code.** Download the lab's `.R` file from this repository and save it in the project folder itself, not in a subfolder.
 
-3.  **Download the data.** Follow the data instructions at the top of the lab and put the files in `data/`. If the download is a zip file, unzip it inside `data/` and keep the folder names inside it, so the paths in the code match.
-
-4.  **Get the lab code.** Download the lab's `.R` file from this repository and save it in the project folder itself, not in a subfolder. If the lab's folder in this repository has an `R/` folder with helper functions, download those files into your `R/` folder.
-
-5.  **Work in the project.** Always open the lab by double-clicking the `.Rproj` file (or *File → Open Project…*) so the working directory is set correctly. Check it with `getwd()`. Do not use `setwd()`.
+4.  **Work in the project.** Always open the lab by double-clicking the `.Rproj` file (or *File → Open Project…*) so the working directory is set correctly. Check it with `getwd()`. Do not use `setwd()`.
 
 The finished project should look like this:
 
@@ -40,7 +33,7 @@ The finished project should look like this:
 ├── <lab_name>.Rproj
 ├── <lab_code>.Rmd
 ├── data/
-│   └── ...        data files and folders from the download
+│   └── ...        data files and folders (from the zip file)
 └── R/
-    └── ...        helper functions (if the lab has any)
+    └── ...        helper functions (from the zip file, if the lab has any)
 ```

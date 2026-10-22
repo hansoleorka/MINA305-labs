@@ -31,7 +31,7 @@ The finished project should look like this:
 ```         
 <lab_name>/
 ├── <lab_name>.Rproj
-├── <lab_code>.Rmd
+├── <lab_code>.R
 ├── data/
 │   └── ...        data files and folders (from the zip file)
 └── R/

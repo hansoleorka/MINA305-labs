@@ -24,7 +24,7 @@ editor_options:
 </ul>
 </div>
 
-The lab exercise is carried out using [R](https://www.r-project.org/) and the [lidR-package](https://github.com/r-lidar/lidR). The [lidRBook](https://r-lidar.github.io/lidRbook/) is a fantastic resource! TAKE A LOOK AT [CHAPTER 7](https://r-lidar.github.io/lidRbook/itd-its.html).
+The lab exercise is carried out using [R](https://www.r-project.org/) and the [lidR-package](https://github.com/r-lidar/lidR). The [lidRBook](https://r-lidar.github.io/lidRbook/) is a fantastic resource! TAKE A LOOK AT [CHAPTER 7](https://r-lidar.github.io/lidRbook/itd.html).
 
 # Packages and data
 

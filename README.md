@@ -29,13 +29,13 @@ Set up each lab as its own RStudio project. The lab code reads files with relati
 
 3.  **Download the data.** Follow the data instructions at the top of the lab and put the files in `data/`. If the download is a zip file, unzip it inside `data/` and keep the folder names inside it, so the paths in the code match.
 
-4.  **Get the lab code.** Download the lab's `.Rmd` (or `.R`) file from this repository and save it in the project folder itself, not in a subfolder. If the lab's folder in this repository has an `R/` folder with helper functions, download those files into your `R/` folder.
+4.  **Get the lab code.** Download the lab's `.R` file from this repository and save it in the project folder itself, not in a subfolder. If the lab's folder in this repository has an `R/` folder with helper functions, download those files into your `R/` folder.
 
 5.  **Work in the project.** Always open the lab by double-clicking the `.Rproj` file (or *File → Open Project…*) so the working directory is set correctly. Check it with `getwd()`. Do not use `setwd()`.
 
 The finished project should look like this:
 
-```
+```         
 <lab_name>/
 ├── <lab_name>.Rproj
 ├── <lab_code>.Rmd

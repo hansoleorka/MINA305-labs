@@ -4,7 +4,7 @@ List of labs:
 
 1.  [Data sources](https://htmlpreview.github.io/?https://github.com/hansoleorka/MINA305-labs/blob/main/01_DataSources/01_datasources.nb.html)
 
-2.  R crash course
+2.  [R crash course](https://github.com/rachelkuzmich/MINA305-R-Crash-Course)  - by @rachelkuzmich 
 
 3.  [Optical Satellite Imagery](https://htmlpreview.github.io/?https://github.com/hansoleorka/MINA305-labs/blob/main/03_OpticalSatelliteImagery/03_LabCode_OpticalSatelliteImagery.nb.html)
 
